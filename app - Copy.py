@@ -8,7 +8,7 @@ def get_cocoa_price_with_retry(max_retries=5):
     retries = 0
     while retries < max_retries:
         try:
-            cacao = yf.Ticker("MSFT")
+            cacao = yf.Ticker("CC=F")
             data = cacao.history(period="1d")
             
             if data.empty:
