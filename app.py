@@ -8,6 +8,10 @@ def get_cacao_price():
     try:
         cacao = yf.Ticker("CC=F")
         data = cacao.history(period="1d")
+
+        if data.empty:
+            return jsonify({"error": "No data available for the specified period."}), 404
+
         last_close = data['Close'].iloc[-1]
         return jsonify({"last_close_price": last_close})
     except Exception as e:
