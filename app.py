@@ -1,21 +1,29 @@
 from flask import Flask, jsonify
 import yfinance as yf
+import time
 
 app = Flask(__name__)
 
-@app.route('/get_cacao_price', methods=['GET'])
+# Simple caching mechanism
+cache = {}
+CACHE_DURATION = 60  # seconds
+
+@app.route('/cacao/price', methods=['GET'])
 def get_cacao_price():
-    try:
-        cacao = yf.Ticker("CC=F")
-        data = cacao.history(period="1d")
+    current_time = time.time()
+    
+    if 'price' in cache:
+        cached_time, cached_price = cache['price']
+        if current_time - cached_time < CACHE_DURATION:
+            return jsonify(price=cached_price)
 
-        if data.empty:
-            return jsonify({"error": "No data available for the specified period."}), 404
+    cacao = yf.Ticker("CC=F")
+    data = cacao.history(period="1d")
+    last_close = data['Close'].iloc[-1]
+    
+    # Update cache
+    cache['price'] = (current_time, last_close)
+    return jsonify(price=last_close)
 
-        last_close = data['Close'].iloc[-1]
-        return jsonify({"last_close_price": last_close})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
